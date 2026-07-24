@@ -3,13 +3,25 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# توکن‌های ربات‌ها
+# توکن‌های ربات‌ها (مطابق با عنوان‌های Secrets شما)
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 BALE_TOKEN = os.getenv("BALE_TOKEN")
-ADMIN_USER_ID = int(os.getenv("ADMIN_USER_ID", 0))
+
+# آیدی عددی کاربران (مطابق با عنوان‌های Secrets شما)
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+if TELEGRAM_CHAT_ID:
+    TELEGRAM_CHAT_ID = int(TELEGRAM_CHAT_ID)
+else:
+    TELEGRAM_CHAT_ID = None
+
+BALE_CHAT_ID = os.getenv("BALE_CHAT_ID")
+if BALE_CHAT_ID:
+    BALE_CHAT_ID = int(BALE_CHAT_ID)
+else:
+    BALE_CHAT_ID = None
 
 # تنظیمات تحلیل
-ARBITRAGE_THRESHOLD = 5.0  # درصد حباب برای سیگنال
+ARBITRAGE_THRESHOLD = 5.0
 RSI_OVERSOLD = 30
 RSI_OVERBOUGHT = 70
 ADX_THRESHOLD = 25
