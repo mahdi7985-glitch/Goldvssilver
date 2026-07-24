@@ -12,7 +12,6 @@ def get_all_data():
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
-        # کاهش timeout به ۵ ثانیه
         response = requests.get(TGJU_URL, headers=headers, timeout=5)
         html = response.text
         
@@ -30,6 +29,9 @@ def get_all_data():
         for key in data:
             if data[key]:
                 data[key] = float(data[key].replace(',', ''))
+        
+        # محاسبه نسبت طلا به نقره
+        data['gold_silver_ratio'] = data['gold_ounce'] / data['silver_ounce']
         
         logging.info(f"✅ داده دریافت شد: نقره {data['silver_999']:,} تومان")
         return data
@@ -58,4 +60,5 @@ def get_fallback_data():
         'gold_18': 18855400,
         'gold_24': 25140300,
         'silver_999': 3860100,
+        'gold_silver_ratio': 4062.37 / 58.58,  # ≈ 69.35
     }
