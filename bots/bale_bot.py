@@ -3,153 +3,113 @@ import logging
 import time
 from config.settings import BALE_TOKEN, BALE_CHAT_ID
 import jdatetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
-def send_bale_signal(score, reasons, data, risk, max_retries=3):
-    """
-    ارسال سیگنال به بله با پیام صمیمی و قابل فهم
-    """
+def send_bale_signal(score, reasons, data, risk_silver, risk_gold, max_retries=3):
     if not BALE_TOKEN or not BALE_CHAT_ID:
-        logger.warning("⚠️ توکن بله یا آیدی چت تنظیم نشده")
+        logger.warning("⚠️ توکن یا آیدی تنظیم نشده")
         return False
 
-    # تاریخ و زمان شمسی
-    now = jdatetime.datetime.now()
-    weekday_map = {
-        'Saturday': 'شنبه', 'Sunday': 'یکشنبه', 'Monday': 'دوشنبه',
-        'Tuesday': 'سه‌شنبه', 'Wednesday': 'چهارشنبه', 
-        'Thursday': 'پنجشنبه', 'Friday': 'جمعه'
-    }
-    month_map = {
-        'Farvardin': 'فروردین', 'Ordibehesht': 'اردیبهشت', 'Khordad': 'خرداد',
-        'Tir': 'تیر', 'Mordad': 'مرداد', 'Shahrivar': 'شهریور',
-        'Mehr': 'مهر', 'Aban': 'آبان', 'Azar': 'آذر',
-        'Dey': 'دی', 'Bahman': 'بهمن', 'Esfand': 'اسفند'
-    }
+    # ساعت ایران
+    utc_now = datetime.now(timezone.utc)
+    iran_now = utc_now + jdatetime.timedelta(hours=3, minutes=30)
+    now = jdatetime.datetime.fromgregorian(datetime=iran_now)
     
-    weekday = weekday_map.get(now.strftime("%A"), "")
-    month = month_map.get(now.strftime("%B"), "")
-    day = now.strftime("%d")
-    year = now.strftime("%Y")
-    time = now.strftime("%H:%M")
+    weekday_map = {'Saturday': 'شنبه', 'Sunday': 'یکشنبه', 'Monday': 'دوشنبه',
+                   'Tuesday': 'سه‌شنبه', 'Wednesday': 'چهارشنبه', 'Thursday': 'پنجشنبه', 'Friday': 'جمعه'}
+    month_map = {'Farvardin': 'فروردین', 'Ordibehesht': 'اردیبهشت', 'Khordad': 'خرداد',
+                 'Tir': 'تیر', 'Mordad': 'مرداد', 'Shahrivar': 'شهریور',
+                 'Mehr': 'مهر', 'Aban': 'آبان', 'Azar': 'آذر',
+                 'Dey': 'دی', 'Bahman': 'بهمن', 'Esfand': 'اسفند'}
     
-    persian_date = f"{weekday} {day} {month} {year} - ساعت {time}"
+    persian_date = f"{weekday_map.get(now.strftime('%A'), '')} {now.strftime('%d')} {month_map.get(now.strftime('%B'), '')} {now.strftime('%Y')} - ساعت {now.strftime('%H:%M')}"
 
-    # تعیین وضعیت
+    # اصلاح قیمت دلار
+    dollar_corrected = data['dollar'] / 10
+
+    # تعیین وضعیت کلی
     if score >= 70:
-        status = "✅ خرید"
-        emoji = "🔥"
-        advice = "فرصت عالی برای خرید"
-    elif 50 <= score < 70:
-        status = "📈 خرید ملایم"
-        emoji = "📈"
-        advice = "احتمال رشد وجود دارد"
-    elif 30 <= score < 50:
-        status = "⏸️ نگهداری"
-        emoji = "⏸️"
-        advice = "فعلاً دست نگه دار"
-    elif 10 <= score < 30:
-        status = "📉 فروش ملایم"
-        emoji = "📉"
-        advice = "احتمال ریزش وجود دارد"
+        status, emoji, advice = "خرید", "🔥", "فرصت عالی برای خرید"
+    elif score >= 50:
+        status, emoji, advice = "خرید ملایم", "📈", "احتمال رشد وجود دارد"
+    elif score >= 30:
+        status, emoji, advice = "نگهداری", "⏸️", "فعلاً دست نگه دار"
+    elif score >= 10:
+        status, emoji, advice = "فروش ملایم", "📉", "احتمال ریزش وجود دارد"
     else:
-        status = "🔴 فروش"
-        emoji = "💀"
-        advice = "ریسک بالاست، احتیاط کن"
-
-    # ساخت دلیل تحلیل به زبان ساده
-    simple_reasons = []
-    for r in reasons:
-        if "تخفیف" in r:
-            simple_reasons.append("🔸 نقره نسبت به قیمت جهانی ارزون‌تر شده")
-        elif "حباب" in r:
-            simple_reasons.append("🔸 نقره نسبت به قیمت جهانی گرون‌تر شده")
-        elif "نسبت طلا به نقره" in r and "بالاست" in r:
-            simple_reasons.append("🔸 نسبت طلا به نقره بالاست (نقره در مقایسه با طلا ارزونه)")
-        elif "نسبت طلا به نقره" in r and "پایین است" in r:
-            simple_reasons.append("🔸 نسبت طلا به نقره پایینه (نقره در مقایسه با طلا گرونه)")
-        elif "RSI" in r and "اشباع فروش" in r:
-            simple_reasons.append("🔸 شاخص RSI می‌گه نقره بیش از حد فروخته شده و احتمال برگشت داره")
-        elif "RSI" in r and "اشباع خرید" in r:
-            simple_reasons.append("🔸 شاخص RSI می‌گه نقره بیش از حد خریده شده و احتمال ریزش داره")
-        elif "MACD" in r and "صعودی" in r:
-            simple_reasons.append("🔸 روند نقره داره صعودی می‌شه")
-        elif "MACD" in r and "نزولی" in r:
-            simple_reasons.append("🔸 روند نقره داره نزولی می‌شه")
-        elif "روند ضعیف" in r:
-            simple_reasons.append("🔸 روند بازار ضعیفه، پس بهتره با احتیاط معامله کنی")
-        else:
-            simple_reasons.append(f"🔸 {r}")
+        status, emoji, advice = "فروش", "💀", "ریسک بالاست، احتیاط کن"
 
     # ساخت پیام (بدون Markdown)
     message = f"""
 سلام! 👋
 
-{emoji} آخرین تحلیل بازار طلا و نقره
+{emoji} تحلیل بازار طلا و نقره
 📅 {persian_date}
 
 ---
-وضعیت کلی:
-{status} - {advice}
+وضعیت کلی: {status} - {advice}
 امتیاز سیستم: {score} از ۱۰۰
 
 ---
 چرا این تصمیم؟
-
-{chr(10).join(simple_reasons)}
-
----
-قیمت‌های الان:
-💰 نقره (۹۹۹): {data['silver_999']:,.0f} تومان
-💰 طلای ۱۸ عیار: {data['gold_18']:,.0f} تومان
-💰 طلای ۲۴ عیار: {data['gold_24']:,.0f} تومان
-💵 دلار: {data['dollar']:,.0f} تومان
-🌍 انس نقره جهانی: {data['silver_ounce']:.2f} دلار
-📊 نسبت طلا به نقره: {data['gold_silver_ratio']:.1f} (هر عدد بالاتر یعنی نقره ارزون‌تره)
+{chr(10).join(['🔸 ' + r for r in reasons])}
 
 ---
-پیشنهاد مدیریت ریسک:
-🛑 حد ضرر: {risk['stop_loss']:,.0f} تومان
-✅ حد سود: {risk['take_profit']:,.0f} تومان
-📦 حجم پیشنهادی: {risk['quantity']} گرم نقره
-💰 سود خالص预估 (بعد از کسر کارمزد): {risk['net_profit']:.1f}%
+حباب قیمتی:
+نقره: {data['silver_premium']:+.1f}%
+طلا: {data['gold_premium']:+.1f}%
+(عدد منفی = ارزان، عدد مثبت = گران)
 
 ---
-نتیجه‌گیری:
-{"✅ این معامله به‌صرفه است و می‌تونه سود خوبی داشته باشه." if risk['is_profitable'] else "❌ این معامله به‌صرفه نیست و پیشنهاد می‌کنم فعلاً معامله نکنی."}
+قیمت‌های لحظه‌ای:
+نقره ۹۹۹: {data['silver_999']:,.0f} تومان
+طلای ۱۸ عیار: {data['gold_18']:,.0f} تومان
+طلای ۲۴ عیار: {data['gold_24']:,.0f} تومان
+دلار: {dollar_corrected:,.0f} تومان
+انس طلا: {data['gold_ounce']:.2f} دلار
+انس نقره: {data['silver_ounce']:.2f} دلار
+نسبت طلا به نقره: {data['gold_silver_ratio']:.1f}
 
 ---
-🤝 یادآوری: این فقط یک تحلیل هست و تصمیم نهایی با خودت است. همیشه با سرمایه‌ای که می‌تونی از دست بدی، معامله کن.
-    """
+پیشنهاد معامله برای نقره:
+{risk_silver['suggestion']}
+حد ضرر: {risk_silver['stop_loss']:,.0f} تومان
+حد سود: {risk_silver['take_profit']:,.0f} تومان
+حجم پیشنهادی: {risk_silver['quantity']} گرم
+سود خالص: {risk_silver['net_profit']:.1f}%
+
+---
+پیشنهاد معامله برای طلا:
+{risk_gold['suggestion']}
+حد ضرر: {risk_gold['stop_loss']:,.0f} تومان
+حد سود: {risk_gold['take_profit']:,.0f} تومان
+حجم پیشنهادی: {risk_gold['quantity']} گرم
+سود خالص: {risk_gold['net_profit']:.1f}%
+
+---
+{"✅ معامله نقره به‌صرفه است." if risk_silver['is_profitable'] else "❌ معامله نقره به‌صرفه نیست."}
+{"✅ معامله طلا به‌صرفه است." if risk_gold['is_profitable'] else "❌ معامله طلا به‌صرفه نیست."}
+"""
 
     # ارسال با Retry
     for attempt in range(max_retries):
         try:
-            url = f"https://tapi.bale.ai/bot{BALE_TOKEN}/sendMessage"
-            payload = {
-                'chat_id': BALE_CHAT_ID,
-                'text': message
-            }
-
-            response = requests.post(url, json=payload, timeout=15)
-            
+            response = requests.post(
+                f"https://tapi.bale.ai/bot{BALE_TOKEN}/sendMessage",
+                json={'chat_id': BALE_CHAT_ID, 'text': message},
+                timeout=15
+            )
             if response.status_code == 200:
                 logger.info("✅ پیام به بله ارسال شد")
                 return True
             elif response.status_code == 503:
-                logger.warning(f"⚠️ سرور بله در دسترس نیست (۵۰۳). تلاش {attempt + 1}/{max_retries}")
+                logger.warning(f"⚠️ خطای ۵۰۳، تلاش {attempt+1}/{max_retries}")
                 time.sleep(5)
-            else:
-                logger.error(f"❌ خطا در ارسال به بله: {response.text}")
-                return False
-                
-        except requests.exceptions.Timeout:
-            logger.warning(f"⏱️ Timeout در ارسال به بله. تلاش {attempt + 1}/{max_retries}")
-            time.sleep(5)
         except Exception as e:
-            logger.error(f"❌ خطای غیرمنتظره در ارسال به بله: {e}")
-            return False
+            logger.error(f"❌ خطا: {e}")
+            time.sleep(5)
     
-    logger.error("❌ ارسال پیام به بله پس از ۳ تلاش ناموفق بود.")
+    logger.error("❌ ارسال به بله پس از ۳ تلاش ناموفق بود.")
     return False
