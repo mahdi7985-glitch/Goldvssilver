@@ -57,35 +57,35 @@ def send_telegram_signal(score, reasons, data, risk_silver, risk_gold):
 
 ---
 حباب قیمتی:
-💰 نقره: {data['silver_premium']:+.1f}%
-💰 طلا: {data['gold_premium']:+.1f}%
+نقره: {data['silver_premium']:+.1f}%
+طلا: {data['gold_premium']:+.1f}%
 (عدد منفی = ارزان، عدد مثبت = گران)
 
 ---
 قیمت‌های لحظه‌ای:
-💰 نقره ۹۹۹: {data['silver_999']:,.0f} تومان
-💰 طلای ۱۸ عیار: {data['gold_18']:,.0f} تومان
-💰 طلای ۲۴ عیار: {data['gold_24']:,.0f} تومان
-💵 دلار: {dollar_corrected:,.0f} تومان
-🌍 انس طلا: {data['gold_ounce']:.2f} دلار
-🌍 انس نقره: {data['silver_ounce']:.2f} دلار
-📊 نسبت طلا به نقره: {data['gold_silver_ratio']:.1f}
+نقره ۹۹۹: {data['silver_999']:,.0f} تومان
+طلای ۱۸ عیار: {data['gold_18']:,.0f} تومان
+طلای ۲۴ عیار: {data['gold_24']:,.0f} تومان
+دلار: {dollar_corrected:,.0f} تومان
+انس طلا: {data['gold_ounce']:.2f} دلار
+انس نقره: {data['silver_ounce']:.2f} دلار
+نسبت طلا به نقره: {data['gold_silver_ratio']:.1f}
 
 ---
 پیشنهاد معامله برای نقره:
-📦 {risk_silver['suggestion']}
-🛑 حد ضرر: {risk_silver['stop_loss']:,.0f} تومان
-✅ حد سود: {risk_silver['take_profit']:,.0f} تومان
-📊 حجم پیشنهادی: {risk_silver['quantity']} گرم
-💰 سود خالص预估: {risk_silver['net_profit']:.1f}%
+{risk_silver['suggestion']}
+حد ضرر: {risk_silver['stop_loss']:,.0f} تومان
+حد سود: {risk_silver['take_profit']:,.0f} تومان
+حجم پیشنهادی: {risk_silver['quantity']} گرم
+سود خالص: {risk_silver['net_profit']:.1f}%
 
 ---
 پیشنهاد معامله برای طلا:
-📦 {risk_gold['suggestion']}
-🛑 حد ضرر: {risk_gold['stop_loss']:,.0f} تومان
-✅ حد سود: {risk_gold['take_profit']:,.0f} تومان
-📊 حجم پیشنهادی: {risk_gold['quantity']} گرم
-💰 سود خالص预估: {risk_gold['net_profit']:.1f}%
+{risk_gold['suggestion']}
+حد ضرر: {risk_gold['stop_loss']:,.0f} تومان
+حد سود: {risk_gold['take_profit']:,.0f} تومان
+حجم پیشنهادی: {risk_gold['quantity']} گرم
+سود خالص: {risk_gold['net_profit']:.1f}%
 
 ---
 {"✅ معامله نقره به‌صرفه است." if risk_silver['is_profitable'] else "❌ معامله نقره به‌صرفه نیست."}
