@@ -12,22 +12,22 @@ def main():
     logging.info("🚀 ربات تحلیل طلا و نقره شروع به کار کرد...")
     
     try:
-        # ۱. دریافت داده
+        # دریافت داده
         data = get_all_data()
         if not data:
             logging.warning("⚠️ داده‌ای دریافت نشد")
             return
         
-        # ۲. تحلیل
+        # تحلیل
         analysis = analyze(data)
         score, reasons = calculate_score(analysis)
         logging.info(f"📊 امتیاز سیستم: {score}")
         
-        # ۳. مدیریت ریسک برای نقره و طلا
+        # مدیریت ریسک برای نقره و طلا
         risk_silver = calculate_risk(data['silver_999'], analysis['atr'], metal_type='silver')
         risk_gold = calculate_risk(data['gold_18'], analysis['atr'], metal_type='gold')
         
-        # ۴. ارسال سیگنال
+        # ارسال سیگنال
         send_telegram_signal(score, reasons, data, risk_silver, risk_gold)
         send_bale_signal(score, reasons, data, risk_silver, risk_gold)
         
