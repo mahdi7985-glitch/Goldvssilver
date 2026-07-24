@@ -2,12 +2,13 @@ name: Silver & Gold Arbitrage Bot
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # هر ۳۰ دقیقه یکبار اجرا میشه
-  workflow_dispatch:  # این اجازه میده دستی هم اجراش کنی
+    - cron: '*/30 * * * *'  # هر ۳۰ دقیقه یکبار
+  workflow_dispatch:        # اجرای دستی
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+    timeout-minutes: 2      # بعد از ۲ دقیقه قطع میشه (مهم!)
     
     steps:
     - name: Checkout repository
@@ -27,6 +28,7 @@ jobs:
       env:
         TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
         BALE_TOKEN: ${{ secrets.BALE_TOKEN }}
-        ADMIN_USER_ID: ${{ secrets.ADMIN_USER_ID }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        BALE_CHAT_ID: ${{ secrets.BALE_CHAT_ID }}
       run: |
         python main.py
