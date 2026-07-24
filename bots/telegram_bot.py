@@ -1,43 +1,39 @@
 import requests
-from config.settings import TELEGRAM_TOKEN, ADMIN_USER_ID
-import jdatetime
+import logging
+from config.settings import TELEGRAM_TOKEN, TELEGRAM_CHAT_ID
+
+# تنظیم لاگر
+logger = logging.getLogger(__name__)
 
 def send_telegram_signal(score, reasons, data, risk):
-    """ارسال سیگنال به تلگرام"""
-    if not TELEGRAM_TOKEN or not ADMIN_USER_ID:
-        print("⚠️ توکن تلگرام یا آیدی کاربر تنظیم نشده")
-        return
-    
-    # تعیین وضعیت
-    if score >= 70:
-        signal = "🟢 خرید قوی"
-        emoji = "🔥"
-    elif 50 <= score < 70:
-        signal = "🟡 خرید معمولی"
-        emoji = "📈"
-    elif 30 <= score < 50:
-        signal = "⚪ نگهداری (بدون معامله)"
-        emoji = "⏸️"
-    elif 10 <= score < 30:
-        signal = "🟠 فروش معمولی"
-        emoji = "📉"
-    else:
-        signal = "🔴 فروش قوی"
-        emoji = "💀"
-    
-    # تاریخ شمسی
-    now = jdatetime.datetime.now()
-    date_persian = now.strftime("%A %d %B %Y")
-    weekday_map = {
-        'Saturday': 'شنبه', 'Sunday': 'یکشنبه', 'Monday': 'دوشنبه',
-        'Tuesday': 'سه‌شنبه', 'Wednesday': 'چهارشنبه', 'Thursday': 'پنجشنبه',
-        'Friday': 'جمعه'
-    }
-    weekday = weekday_map.get(now.strftime("%A"), "")
-    
-    # ساخت پیام
-    message = f"""
-{emoji} *سیگنال معاملاتی - {date_persian}*
+    """
+    ارسال سیگنال به تلگرام با استفاده از Polling
+    """
+    if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
+        logger.warning("⚠️ توکن تلگرام یا آیدی چت تنظیم نشده")
+        return False
+
+    try:
+        # تعیین وضعیت
+        if score >= 70:
+            signal = "🟢 خرید قوی"
+            emoji = "🔥"
+        elif 50 <= score < 70:
+            signal = "🟡 خرید معمولی"
+            emoji = "📈"
+        elif 30 <= score < 50:
+            signal = "⚪ نگهداری (بدون معامله)"
+            emoji = "⏸️"
+        elif 10 <= score < 30:
+            signal = "🟠 فروش معمولی"
+            emoji = "📉"
+        else:
+            signal = "🔴 فروش قوی"
+            emoji = "💀"
+
+        # ساخت پیام
+        message = f"""
+{emoji} *سیگنال معاملاتی*
 
 🎯 *وضعیت:* {signal}
 📊 *امتیاز سیستم:* {score}/100
@@ -60,23 +56,26 @@ def send_telegram_signal(score, reasons, data, risk):
 
 {"✅ معامله به صرفه است" if risk['is_profitable'] else "❌ معامله نکن (سود کافی نیست)"}
 
----
-🤝 این یک پیشنهاد تحلیلی است. مسئولیت تصمیم‌گیری با شماست.
-    """
-    
-    # ارسال به تلگرام
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-    payload = {
-        'chat_id': ADMIN_USER_ID,
-        'text': message,
-        'parse_mode': 'Markdown'
-    }
-    
-    try:
-        response = requests.post(url, json=payload, timeout=10)
+---.
+        """
+
+        # ارسال پیام با API تلگرام (بدون Webhook)
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        payload = {
+            'chat_id': TELEGRAM_CHAT_ID,
+            'text': message,
+            'parse_mode': 'Markdown'
+        }
+
+        response = requests.post(url, json=payload, timeout=15)
+        
         if response.status_code == 200:
-            print("✅ پیام به تلگرام ارسال شد")
+            logger.info("✅ پیام به تلگرام ارسال شد")
+            return True
         else:
-            print(f"❌ خطا در ارسال به تلگرام: {response.text}")
+            logger.error(f"❌ خطا در ارسال به تلگرام: {response.text}")
+            return False
+
     except Exception as e:
-        print(f"❌ خطا: {e}")
+        logger.error(f"❌ خطای غیرمنتظره در ارسال به تلگرام: {e}")
+        return False
