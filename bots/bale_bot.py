@@ -62,7 +62,9 @@ def send_bale_signal(score, reasons, data, risk, max_retries=3):
     # ارسال با Retry
     for attempt in range(max_retries):
         try:
-            url = f"https://tapi.bale.ai/v1/bots/{BALE_TOKEN}/sendMessage"
+            # ✅ آدرس صحیح API بله
+            url = f"https://tapi.bale.ai/bot{BALE_TOKEN}/sendMessage"
+            
             payload = {
                 'chat_id': BALE_CHAT_ID,
                 'text': message
@@ -75,7 +77,10 @@ def send_bale_signal(score, reasons, data, risk, max_retries=3):
                 return True
             elif response.status_code == 503:
                 logger.warning(f"⚠️ سرور بله در دسترس نیست (۵۰۳). تلاش {attempt + 1}/{max_retries}")
-                time.sleep(5)  # ۵ ثانیه صبر کن و دوباره تلاش کن
+                time.sleep(5)
+            elif response.status_code == 404:
+                logger.error("❌ آدرس API بله پیدا نشد (۴۰۴). لطفاً توکن را بررسی کنید.")
+                return False
             else:
                 logger.error(f"❌ خطا در ارسال به بله: {response.text}")
                 return False
