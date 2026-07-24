@@ -19,18 +19,22 @@ def calculate_risk(price, atr, capital=100000000, metal_type='silver'):
     max_risk_amount = capital * MAX_CAPITAL_RISK
     quantity = max_risk_amount // price
     
-    # پیشنهاد معامله
+    # پیشنهاد معامله و توضیح صمیمی
     is_profitable = net_profit >= (MIN_PROFIT_AFTER_FEE * 100)
     
     if is_profitable:
         if net_profit > 10:
-            suggestion = "🔥 پیشنهاد خرید قوی"
+            suggestion = "🔥 معامله کن (فرصت عالی)"
+            explanation = "این معامله سود خیلی خوبی داره. با توجه به تحلیل، الان وقتشه که وارد بشی."
         elif net_profit > 5:
-            suggestion = "📈 پیشنهاد خرید"
+            suggestion = "📈 معامله کن"
+            explanation = "این معامله سود مناسبی داره. می‌تونی با خیال راحت وارد بشی."
         else:
-            suggestion = "⚖️ پیشنهاد نگهداری"
+            suggestion = "⚖️ صبر کن"
+            explanation = "سود این معامله کمه. بهتره کمی صبر کنی تا شرایط بهتر بشه."
     else:
-        suggestion = "❌ پیشنهاد معامله نکن"
+        suggestion = "❌ معامله نکن"
+        explanation = "این معامله به‌صرفه نیست. کارمزد و ریسکش بیشتر از سودشه. فعلاً دست نگه دار."
     
     # نوع فلز
     metal_name = "نقره" if metal_type == 'silver' else "طلا"
@@ -43,6 +47,7 @@ def calculate_risk(price, atr, capital=100000000, metal_type='silver'):
         'quantity': int(quantity),
         'is_profitable': is_profitable,
         'suggestion': suggestion,
+        'explanation': explanation,
         'metal_name': metal_name,
         'max_capital_risk': MAX_CAPITAL_RISK * 100
     }
