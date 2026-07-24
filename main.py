@@ -3,7 +3,6 @@ from src.data_fetcher import get_all_data
 from src.analyzer import analyze
 from src.decision_engine import calculate_score
 from src.risk_manager import calculate_risk
-from src.database import init_db, save_signal, get_last_signal
 from bots.telegram_bot import send_telegram_signal
 from bots.bale_bot import send_bale_signal
 
@@ -14,32 +13,23 @@ def main():
     
     try:
         # ۱. دریافت داده
-        logging.info("📥 در حال دریافت داده از TGJU...")
         data = get_all_data()
-        
         if not data:
             logging.warning("⚠️ داده‌ای دریافت نشد")
             return
         
         # ۲. تحلیل
-        logging.info("🔍 در حال تحلیل داده...")
         analysis = analyze(data)
-        
-        # ۳. محاسبه امتیاز
         score, reasons = calculate_score(analysis)
         logging.info(f"📊 امتیاز سیستم: {score}")
         
-        # ۴. مدیریت ریسک
-        risk = calculate_risk(data['silver_999'], analysis['atr'])
+        # ۳. مدیریت ریسک برای نقره و طلا
+        risk_silver = calculate_risk(data['silver_999'], analysis['atr'], metal_type='silver')
+        risk_gold = calculate_risk(data['gold_18'], analysis['atr'], metal_type='gold')
         
-        # ۵. ارسال سیگنال (همیشه در هر اجرا)
-        logging.info("📤 ارسال سیگنال...")
-        
-        # ارسال به تلگرام
-        send_telegram_signal(score, reasons, data, risk)
-        
-        # ارسال به بله
-        send_bale_signal(score, reasons, data, risk)
+        # ۴. ارسال سیگنال
+        send_telegram_signal(score, reasons, data, risk_silver, risk_gold)
+        send_bale_signal(score, reasons, data, risk_silver, risk_gold)
         
         logging.info("✅ اجرای ربات با موفقیت کامل شد.")
         
