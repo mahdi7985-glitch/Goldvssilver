@@ -37,10 +37,14 @@ def get_all_data():
             'silver_999': float(silver_999.replace(',', '')),
         }
         
-        # محاسبه نسبت طلا به نقره
+        # محاسبه قیمت منصفانه و حباب
+        data['fair_silver'] = (data['silver_ounce'] * data['dollar']) / 31.103
+        data['fair_gold'] = (data['gold_ounce'] * data['dollar']) / 31.103
+        data['silver_premium'] = ((data['silver_999'] / data['fair_silver']) - 1) * 100
+        data['gold_premium'] = ((data['gold_18'] / data['fair_gold']) - 1) * 100
         data['gold_silver_ratio'] = data['gold_ounce'] / data['silver_ounce']
         
-        logging.info(f"✅ داده دریافت شد: نقره {data['silver_999']:,} تومان")
+        logging.info(f"✅ داده دریافت شد: طلا {data['gold_18']:,} - نقره {data['silver_999']:,} تومان")
         return data
         
     except Exception as e:
@@ -57,12 +61,17 @@ def extract_price(text, pattern):
 def get_fallback_data():
     """داده‌های آزمایشی"""
     logging.info("📊 استفاده از داده‌های آزمایشی (Fallback)")
-    return {
+    data = {
         'gold_ounce': 4062.37,
         'silver_ounce': 58.58,
         'dollar': 1931150,
         'gold_18': 18855400,
         'gold_24': 25140300,
         'silver_999': 3860100,
-        'gold_silver_ratio': 4062.37 / 58.58,
     }
+    data['fair_silver'] = (data['silver_ounce'] * data['dollar']) / 31.103
+    data['fair_gold'] = (data['gold_ounce'] * data['dollar']) / 31.103
+    data['silver_premium'] = ((data['silver_999'] / data['fair_silver']) - 1) * 100
+    data['gold_premium'] = ((data['gold_18'] / data['fair_gold']) - 1) * 100
+    data['gold_silver_ratio'] = data['gold_ounce'] / data['silver_ounce']
+    return data
