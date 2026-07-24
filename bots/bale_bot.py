@@ -126,7 +126,7 @@ def send_bale_signal(score, reasons, data, risk, max_retries=3):
     # ارسال با Retry
     for attempt in range(max_retries):
         try:
-            url = f"https://api.bale.ai/bot{BALE_TOKEN}/sendMessage"
+            url = f"https://tapi.bale.ai/bot{BALE_TOKEN}/sendMessage"
             payload = {
                 'chat_id': BALE_CHAT_ID,
                 'text': message
