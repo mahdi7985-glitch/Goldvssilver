@@ -28,27 +28,37 @@ def send_telegram_signal(score, reasons, data, risk_silver, risk_gold):
     # اصلاح قیمت دلار
     dollar_corrected = data['dollar'] / 10
 
-    # تعیین وضعیت کلی
+    # تعیین وضعیت کلی (مشخص کردن فلز)
     if score >= 70:
-        status, emoji, advice = "خرید", "🔥", "فرصت عالی برای خرید"
+        status_emoji = "🔥"
+        status_text = "خرید قوی"
+        advice = "فرصت عالی برای خرید"
     elif score >= 50:
-        status, emoji, advice = "خرید ملایم", "📈", "احتمال رشد وجود دارد"
+        status_emoji = "📈"
+        status_text = "خرید ملایم"
+        advice = "احتمال رشد وجود دارد"
     elif score >= 30:
-        status, emoji, advice = "نگهداری", "⏸️", "فعلاً دست نگه دار"
+        status_emoji = "⏸️"
+        status_text = "نگهداری"
+        advice = "فعلاً دست نگه دار"
     elif score >= 10:
-        status, emoji, advice = "فروش ملایم", "📉", "احتمال ریزش وجود دارد"
+        status_emoji = "📉"
+        status_text = "فروش ملایم"
+        advice = "احتمال ریزش وجود دارد"
     else:
-        status, emoji, advice = "فروش", "💀", "ریسک بالاست، احتیاط کن"
+        status_emoji = "💀"
+        status_text = "فروش قوی"
+        advice = "ریسک بالاست، احتیاط کن"
 
     # ساخت پیام
     message = f"""
 سلام! 👋
 
-{emoji} تحلیل بازار طلا و نقره
+{status_emoji} تحلیل بازار نقره
 📅 {persian_date}
 
 ---
-وضعیت کلی: {status} - {advice}
+وضعیت کلی: {status_text} - {advice}
 امتیاز سیستم: {score} از ۱۰۰
 
 ---
@@ -72,24 +82,24 @@ def send_telegram_signal(score, reasons, data, risk_silver, risk_gold):
 نسبت طلا به نقره: {data['gold_silver_ratio']:.1f}
 
 ---
-پیشنهاد معامله برای نقره:
+معامله نقره:
 {risk_silver['suggestion']}
 حد ضرر: {risk_silver['stop_loss']:,.0f} تومان
 حد سود: {risk_silver['take_profit']:,.0f} تومان
 حجم پیشنهادی: {risk_silver['quantity']} گرم
 سود خالص: {risk_silver['net_profit']:.1f}%
 
+{risk_silver['explanation']}
+
 ---
-پیشنهاد معامله برای طلا:
+معامله طلا:
 {risk_gold['suggestion']}
 حد ضرر: {risk_gold['stop_loss']:,.0f} تومان
 حد سود: {risk_gold['take_profit']:,.0f} تومان
 حجم پیشنهادی: {risk_gold['quantity']} گرم
 سود خالص: {risk_gold['net_profit']:.1f}%
 
----
-{"✅ معامله نقره به‌صرفه است." if risk_silver['is_profitable'] else "❌ معامله نقره به‌صرفه نیست."}
-{"✅ معامله طلا به‌صرفه است." if risk_gold['is_profitable'] else "❌ معامله طلا به‌صرفه نیست."}
+{risk_gold['explanation']}
 """
 
     # ارسال
