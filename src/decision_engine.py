@@ -18,14 +18,17 @@ def calculate_score(analysis):
         score -= 20
         reasons.append("❌ نقره با حباب ۵٪+ (ارزش فروش)")
     
-    # ۲. نسبت طلا به نقره (وزن: ۱۵) - با تفسیر درست
+    # ۲. نسبت طلا به نقره (وزن: ۱۵) - با تفسیر جدید
     ratio = analysis['gold_silver_ratio']
     if ratio > 85:
         score += 15
-        reasons.append(f"✅ نسبت طلا به نقره بالا ({ratio:.1f}) → نقره ارزان‌تر از طلا")
-    elif ratio < 70:
+        reasons.append(f"✅ نسبت طلا به نقره بالا ({ratio:.1f}) → نقره ارزان‌تر از طلا (فرصت خرید)")
+    elif ratio < 55:
         score -= 15
-        reasons.append(f"❌ نسبت طلا به نقره پایین ({ratio:.1f}) → نقره گران‌تر از طلا")
+        reasons.append(f"❌ نسبت طلا به نقره بسیار پایین ({ratio:.1f}) → نقره بسیار گران (احتیاط)")
+    elif ratio < 70:
+        score -= 5  # کاهش امتیاز جزئی
+        reasons.append(f"➖ نسبت طلا به نقره پایین‌تر از میانگین ({ratio:.1f}) → نقره نسبتاً گران")
     else:
         reasons.append(f"➖ نسبت طلا به نقره در محدوده متعادل ({ratio:.1f})")
     
@@ -64,15 +67,15 @@ def calculate_score(analysis):
         score -= 10
         reasons.append(f"❌ انس نقره در حال ریزش ({ounce_change:.1f}%)")
     
-    # ۷. فیلتر ADX (قدرت روند)
+    # ۷. فیلتر ADX
     adx = analysis.get('adx', 0)
     if adx < ADX_THRESHOLD:
-        score = int(score * 0.7)  # کاهش ۳۰٪ امتیاز در روند ضعیف
+        score = int(score * 0.7)
         reasons.append(f"⚠️ روند ضعیف (ADX={adx:.1f}) → اعتماد کمتر به سیگنال")
     elif adx > 40:
         reasons.append(f"🔥 روند بسیار قوی (ADX={adx:.1f})")
     
-    # محدود کردن امتیاز در بازه -۱۰۰ تا +۱۰۰
+    # محدود کردن امتیاز
     score = max(-100, min(100, score))
     
     return score, reasons
