@@ -103,16 +103,10 @@ def calculate_gold_premiums(gold_ounce: float, dollar: float, gold_18: float, go
     """
     محاسبه حباب طلای ۱۸ و ۲۴ عیار
     """
-    # قیمت منصفانه طلای ۲۴ عیار (خالص)
     fair_gold_24 = (gold_ounce * dollar) / 31.103
-    
-    # قیمت منصفانه طلای ۱۸ عیار (۷۵٪ خلوص)
     fair_gold_18 = fair_gold_24 * 0.75
     
-    # حباب طلای ۲۴ عیار
     gold_24_premium = ((gold_24 / fair_gold_24) - 1) * 100 if fair_gold_24 > 0 else 0
-    
-    # حباب طلای ۱۸ عیار
     gold_18_premium = ((gold_18 / fair_gold_18) - 1) * 100 if fair_gold_18 > 0 else 0
     
     return {
@@ -123,14 +117,7 @@ def calculate_gold_premiums(gold_ounce: float, dollar: float, gold_18: float, go
     }
 
 # ============================================
-# تبدیل قیمت از ریال به تومان
-# ============================================
-def convert_to_toman(value: float) -> float:
-    """تبدیل قیمت از ریال به تومان"""
-    return value / 10
-
-# ============================================
-# تابع اصلی دریافت داده
+# تابع اصلی دریافت داده (همه قیمت‌ها به تومان)
 # ============================================
 def get_all_data() -> Dict[str, Any]:
     global DATA_SOURCE
@@ -171,47 +158,67 @@ def get_all_data() -> Dict[str, Any]:
         DATA_SOURCE = "error"
         raise Exception("⚠️ قیمت طلای ۱۸ عیار دریافت نشد. لطفاً بعداً تلاش کنید.")
     
-    # محاسبه حباب نقره
+    # ========== تبدیل همه قیمت‌ها به تومان ==========
+    # قیمت‌های دریافتی از TGJU به ریال هستند
+    silver_toman = results['silver_999'] / 10
+    gold_18_toman = results['gold_18'] / 10
+    gold_24_toman = results['gold_24'] / 10
+    dollar_toman = results['dollar'] / 10
+    
+    # ========== محاسبه حباب نقره ==========
     try:
         if results.get('silver_ounce', 0) > 0 and results.get('dollar', 0) > 0:
-            fair_silver = (results['silver_ounce'] * results['dollar']) / 31.103
+            fair_silver = (results['silver_ounce'] * results['dollar']) / 31.103 / 10  # تبدیل به تومان
         else:
-            fair_silver = results['silver_999']
+            fair_silver = silver_toman
         
-        silver_premium = ((results['silver_999'] / fair_silver) - 1) * 100 if fair_silver > 0 else 0
+        silver_premium = ((silver_toman / fair_silver) - 1) * 100 if fair_silver > 0 else 0
     except:
-        fair_silver = results['silver_999']
+        fair_silver = silver_toman
         silver_premium = 0
     
-    # محاسبه حباب طلای ۱۸ و ۲۴ عیار
+    # ========== محاسبه حباب طلا ==========
     gold_premiums = calculate_gold_premiums(
         results['gold_ounce'],
         results['dollar'],
         results['gold_18'],
         results['gold_24']
     )
+    # تبدیل قیمت‌های منصفانه طلا به تومان
+    gold_premiums['fair_gold_24'] = gold_premiums['fair_gold_24'] / 10
+    gold_premiums['fair_gold_18'] = gold_premiums['fair_gold_18'] / 10
     
-    # نسبت طلا به نقره
+    # ========== نسبت طلا به نقره ==========
     gold_silver_ratio = results['gold_ounce'] / results['silver_ounce'] if results.get('silver_ounce', 0) > 0 else 69.3
     
-    # جمع‌آوری نتایج (تبدیل به تومان برای نمایش)
-    results.update({
-        'fair_silver': fair_silver / 10,  # تبدیل به تومان
+    # ========== جمع‌آوری نتایج نهایی (همه به تومان) ==========
+    final_data = {
+        # قیمت‌های بازار (تومان)
+        'silver_999': silver_toman,
+        'gold_18': gold_18_toman,
+        'gold_24': gold_24_toman,
+        'dollar': dollar_toman,
+        
+        # قیمت‌های جهانی (دلار)
+        'gold_ounce': results['gold_ounce'],
+        'silver_ounce': results['silver_ounce'],
+        
+        # قیمت‌های منصفانه (تومان)
+        'fair_silver': fair_silver,
+        'fair_gold_24': gold_premiums['fair_gold_24'],
+        'fair_gold_18': gold_premiums['fair_gold_18'],
+        
+        # حباب‌ها (درصد)
         'silver_premium': silver_premium,
-        'gold_silver_ratio': gold_silver_ratio,
-        'fair_gold_24': gold_premiums['fair_gold_24'] / 10,  # تبدیل به تومان
-        'fair_gold_18': gold_premiums['fair_gold_18'] / 10,  # تبدیل به تومان
         'gold_24_premium': gold_premiums['gold_24_premium'],
         'gold_18_premium': gold_premiums['gold_18_premium'],
-        # تبدیل قیمت‌های بازار به تومان
-        'silver_999_toman': results['silver_999'] / 10,
-        'gold_18_toman': results['gold_18'] / 10,
-        'gold_24_toman': results['gold_24'] / 10,
-        'dollar_toman': results['dollar'] / 10,
-    })
+        
+        # نسبت طلا به نقره
+        'gold_silver_ratio': gold_silver_ratio,
+    }
     
     DATA_SOURCE = "live (tgju.org)"
     if failed_items:
         DATA_SOURCE = f"live (با خطا در: {', '.join(failed_items)})"
     
-    return results
+    return final_data
