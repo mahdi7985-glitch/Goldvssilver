@@ -122,7 +122,7 @@ def send_bale_signal(score, reasons, data, risk_silver, risk_gold, max_retries=3
     for attempt in range(max_retries):
         try:
             response = requests.post(
-                f"https://api.bale.ai/bot{BALE_TOKEN}/sendMessage",
+                f"https://tapi.bale.ai/bot{BALE_TOKEN}/sendMessage",
                 json={'chat_id': BALE_CHAT_ID, 'text': message},
                 timeout=15
             )
