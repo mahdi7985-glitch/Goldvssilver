@@ -60,7 +60,7 @@ def send_telegram_signal(score, reasons, data, risk_silver, risk_gold):
 طلای ۲۴ عیار: {premium_text(data['gold_24_premium'])}
 (عدد منفی یعنی کالا نسبت به قیمت جهانی‌اش با تخفیف فروخته می‌شه و عدد مثبت یعنی با حباب.)"""
 
-    # ساخت پیام
+    # ساخت پیام (بدون حجم و سود خالص)
     message = f"""
 سلام! 👋
 
@@ -93,8 +93,6 @@ def send_telegram_signal(score, reasons, data, risk_silver, risk_gold):
 {risk_silver['suggestion']}
 حد ضرر: {risk_silver['stop_loss']:,.0f} تومان
 حد سود: {risk_silver['take_profit']:,.0f} تومان
-حجم پیشنهادی: {risk_silver['quantity_display']}
-سود خالص: {risk_silver['net_profit']:.1f}%
 
 {risk_silver['explanation']}
 
@@ -103,8 +101,6 @@ def send_telegram_signal(score, reasons, data, risk_silver, risk_gold):
 {risk_gold['suggestion']}
 حد ضرر: {risk_gold['stop_loss']:,.0f} تومان
 حد سود: {risk_gold['take_profit']:,.0f} تومان
-حجم پیشنهادی: {risk_gold['quantity_display']}
-سود خالص: {risk_gold['net_profit']:.1f}%
 
 {risk_gold['explanation']}
 """
