@@ -25,30 +25,19 @@ def send_telegram_signal(score, reasons, data, risk_silver, risk_gold):
     
     persian_date = f"{weekday_map.get(now.strftime('%A'), '')} {now.strftime('%d')} {month_map.get(now.strftime('%B'), '')} {now.strftime('%Y')} - ساعت {now.strftime('%H:%M')}"
 
-    # اصلاح قیمت دلار
-    dollar_corrected = data['dollar'] / 10
-
-    # تعیین وضعیت کلی
-    if score >= 70:
-        status_emoji = "🔥"
-        status_text = "خرید قوی"
-        advice = "فرصت عالی برای خرید"
-    elif score >= 50:
-        status_emoji = "📈"
-        status_text = "خرید ملایم"
-        advice = "احتمال رشد وجود دارد"
-    elif score >= 30:
-        status_emoji = "⏸️"
-        status_text = "نگهداری"
-        advice = "فعلاً دست نگه دار"
-    elif score >= 10:
-        status_emoji = "📉"
-        status_text = "فروش ملایم"
-        advice = "احتمال ریزش وجود دارد"
-    else:
-        status_emoji = "💀"
-        status_text = "فروش قوی"
-        advice = "ریسک بالاست، احتیاط کن"
+    # تعیین وضعیت کلی (با استفاده از دیکشنری)
+    status_map = {
+        (70, 100): ("🔥", "خرید قوی", "فرصت عالی برای خرید"),
+        (50, 69): ("📈", "خرید ملایم", "احتمال رشد وجود دارد"),
+        (30, 49): ("⏸️", "نگهداری", "فعلاً دست نگه دار"),
+        (10, 29): ("📉", "فروش ملایم", "احتمال ریزش وجود دارد"),
+        (-100, 9): ("💀", "فروش قوی", "ریسک بالاست، احتیاط کن")
+    }
+    
+    for (low, high), (emoji, status, advice) in status_map.items():
+        if low <= score <= high:
+            status_emoji, status_text, advice = emoji, status, advice
+            break
 
     # توضیح کامل "چرا این تصمیم؟"
     if reasons:
@@ -61,13 +50,13 @@ def send_telegram_signal(score, reasons, data, risk_silver, risk_gold):
 {reasons_text}"""
 
     # توضیح کامل حباب قیمتی (با طلای ۱۸ و ۲۴)
-    silver_premium_text = f"{data['silver_premium']:+.1f}% - {'ارزون‌تر از ارزش جهانی' if data['silver_premium'] < 0 else 'گرون‌تر از ارزش جهانی'}"
-    gold_18_premium_text = f"{data['gold_18_premium']:+.1f}% - {'ارزون‌تر از ارزش جهانی' if data['gold_18_premium'] < 0 else 'گرون‌تر از ارزش جهانی'}"
-    gold_24_premium_text = f"{data['gold_24_premium']:+.1f}% - {'ارزون‌تر از ارزش جهانی' if data['gold_24_premium'] < 0 else 'گرون‌تر از ارزش جهانی'}"
+    def premium_text(value):
+        return f"{value:+.1f}% - {'ارزون‌تر از ارزش جهانی' if value < 0 else 'گرون‌تر از ارزش جهانی'}"
 
-    premium_explanation = f"""نقره: {silver_premium_text}
-طلای ۱۸ عیار: {gold_18_premium_text}
-طلای ۲۴ عیار: {gold_24_premium_text}
+    premium_explanation = f"""
+نقره: {premium_text(data['silver_premium'])}
+طلای ۱۸ عیار: {premium_text(data['gold_18_premium'])}
+طلای ۲۴ عیار: {premium_text(data['gold_24_premium'])}
 (عدد منفی یعنی کالا نسبت به قیمت جهانی‌اش با تخفیف فروخته می‌شه و عدد مثبت یعنی با حباب.)"""
 
     # ساخت پیام
@@ -89,11 +78,11 @@ def send_telegram_signal(score, reasons, data, risk_silver, risk_gold):
 {premium_explanation}
 
 ---
-قیمت‌های لحظه‌ای:
-نقره ۹۹۹: {data['silver_999']:,.0f} تومان
-طلای ۱۸ عیار: {data['gold_18']:,.0f} تومان
-طلای ۲۴ عیار: {data['gold_24']:,.0f} تومان
-دلار: {dollar_corrected:,.0f} تومان
+قیمت‌های لحظه‌ای (تومان):
+نقره ۹۹۹: {data['silver_999_toman']:,.0f} تومان
+طلای ۱۸ عیار: {data['gold_18_toman']:,.0f} تومان
+طلای ۲۴ عیار: {data['gold_24_toman']:,.0f} تومان
+دلار: {data['dollar_toman']:,.0f} تومان
 انس طلا: {data['gold_ounce']:.2f} دلار
 انس نقره: {data['silver_ounce']:.2f} دلار
 نسبت طلا به نقره: {data['gold_silver_ratio']:.1f}
@@ -103,7 +92,7 @@ def send_telegram_signal(score, reasons, data, risk_silver, risk_gold):
 {risk_silver['suggestion']}
 حد ضرر: {risk_silver['stop_loss']:,.0f} تومان
 حد سود: {risk_silver['take_profit']:,.0f} تومان
-حجم پیشنهادی: {risk_silver['quantity']} گرم
+حجم پیشنهادی: {risk_silver['quantity_display']}
 سود خالص: {risk_silver['net_profit']:.1f}%
 
 {risk_silver['explanation']}
@@ -113,7 +102,7 @@ def send_telegram_signal(score, reasons, data, risk_silver, risk_gold):
 {risk_gold['suggestion']}
 حد ضرر: {risk_gold['stop_loss']:,.0f} تومان
 حد سود: {risk_gold['take_profit']:,.0f} تومان
-حجم پیشنهادی: {risk_gold['quantity']} گرم
+حجم پیشنهادی: {risk_gold['quantity_display']}
 سود خالص: {risk_gold['net_profit']:.1f}%
 
 {risk_gold['explanation']}
