@@ -69,12 +69,9 @@ def _fetch_from_tgju(url: str) -> Optional[float]:
     
     return None
 
-# ============================================
-# توابع دریافت قیمت با آدرس‌های نهایی
-# ============================================
 def fetch_silver_price():
     """دریافت قیمت نقره ۹۹۹"""
-    url = "https://www.tgju.org/profile/silver_999"  # آدرس نهایی نقره
+    url = "https://www.tgju.org/profile/silver_999"
     return _fetch_from_tgju(url)
 
 def fetch_gold_18_price():
@@ -91,17 +88,14 @@ def fetch_dollar_price():
 
 def fetch_ounce_gold_price():
     """دریافت قیمت انس طلا"""
-    url = "https://www.tgju.org/profile/ons"  # آدرس نهایی انس طلا
+    url = "https://www.tgju.org/profile/ons"
     return _fetch_from_tgju(url)
 
 def fetch_ounce_silver_price():
-    """دریافت قیمت انس نقره - از آدرس نقره ۹۹۹ استفاده می‌کنیم"""
-    url = "https://www.tgju.org/profile/silver_999"  # آدرس نقره ۹۹۹
+    """دریافت قیمت انس نقره"""
+    url = "https://www.tgju.org/profile/silver"  # آدرس جدید انس نقره
     return _fetch_from_tgju(url)
 
-# ============================================
-# تابع اصلی دریافت داده
-# ============================================
 def get_all_data() -> Dict[str, Any]:
     global DATA_SOURCE
     
