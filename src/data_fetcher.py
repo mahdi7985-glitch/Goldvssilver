@@ -123,6 +123,13 @@ def calculate_gold_premiums(gold_ounce: float, dollar: float, gold_18: float, go
     }
 
 # ============================================
+# تبدیل قیمت از ریال به تومان
+# ============================================
+def convert_to_toman(value: float) -> float:
+    """تبدیل قیمت از ریال به تومان"""
+    return value / 10
+
+# ============================================
 # تابع اصلی دریافت داده
 # ============================================
 def get_all_data() -> Dict[str, Any]:
@@ -187,12 +194,20 @@ def get_all_data() -> Dict[str, Any]:
     # نسبت طلا به نقره
     gold_silver_ratio = results['gold_ounce'] / results['silver_ounce'] if results.get('silver_ounce', 0) > 0 else 69.3
     
-    # جمع‌آوری نتایج
+    # جمع‌آوری نتایج (تبدیل به تومان برای نمایش)
     results.update({
-        'fair_silver': fair_silver,
+        'fair_silver': fair_silver / 10,  # تبدیل به تومان
         'silver_premium': silver_premium,
         'gold_silver_ratio': gold_silver_ratio,
-        **gold_premiums  # اضافه کردن حباب‌های طلا
+        'fair_gold_24': gold_premiums['fair_gold_24'] / 10,  # تبدیل به تومان
+        'fair_gold_18': gold_premiums['fair_gold_18'] / 10,  # تبدیل به تومان
+        'gold_24_premium': gold_premiums['gold_24_premium'],
+        'gold_18_premium': gold_premiums['gold_18_premium'],
+        # تبدیل قیمت‌های بازار به تومان
+        'silver_999_toman': results['silver_999'] / 10,
+        'gold_18_toman': results['gold_18'] / 10,
+        'gold_24_toman': results['gold_24'] / 10,
+        'dollar_toman': results['dollar'] / 10,
     })
     
     DATA_SOURCE = "live (tgju.org)"
