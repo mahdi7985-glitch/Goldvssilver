@@ -25,7 +25,7 @@ def send_telegram_signal(score, reasons, data, risk_silver, risk_gold):
     
     persian_date = f"{weekday_map.get(now.strftime('%A'), '')} {now.strftime('%d')} {month_map.get(now.strftime('%B'), '')} {now.strftime('%Y')} - ساعت {now.strftime('%H:%M')}"
 
-    # تعیین وضعیت کلی (با استفاده از دیکشنری)
+    # تعیین وضعیت کلی
     status_map = {
         (70, 100): ("🔥", "خرید قوی", "فرصت عالی برای خرید"),
         (50, 69): ("📈", "خرید ملایم", "احتمال رشد وجود دارد"),
@@ -34,12 +34,13 @@ def send_telegram_signal(score, reasons, data, risk_silver, risk_gold):
         (-100, 9): ("💀", "فروش قوی", "ریسک بالاست، احتیاط کن")
     }
     
-    for (low, high), (emoji, status, advice) in status_map.items():
+    status_emoji, status_text, advice = "⏸️", "نامشخص", ""
+    for (low, high), (emoji, status, adv) in status_map.items():
         if low <= score <= high:
-            status_emoji, status_text, advice = emoji, status, advice
+            status_emoji, status_text, advice = emoji, status, adv
             break
 
-    # توضیح کامل "چرا این تصمیم؟"
+    # توضیح دلایل
     if reasons:
         reasons_text = "\n".join(['🔸 ' + r for r in reasons])
     else:
@@ -49,7 +50,7 @@ def send_telegram_signal(score, reasons, data, risk_silver, risk_gold):
 
 {reasons_text}"""
 
-    # توضیح کامل حباب قیمتی (با طلای ۱۸ و ۲۴)
+    # حباب قیمتی
     def premium_text(value):
         return f"{value:+.1f}% - {'ارزون‌تر از ارزش جهانی' if value < 0 else 'گرون‌تر از ارزش جهانی'}"
 
@@ -79,10 +80,10 @@ def send_telegram_signal(score, reasons, data, risk_silver, risk_gold):
 
 ---
 قیمت‌های لحظه‌ای (تومان):
-نقره ۹۹۹: {data['silver_999_toman']:,.0f} تومان
-طلای ۱۸ عیار: {data['gold_18_toman']:,.0f} تومان
-طلای ۲۴ عیار: {data['gold_24_toman']:,.0f} تومان
-دلار: {data['dollar_toman']:,.0f} تومان
+نقره ۹۹۹: {data['silver_999']:,.0f} تومان
+طلای ۱۸ عیار: {data['gold_18']:,.0f} تومان
+طلای ۲۴ عیار: {data['gold_24']:,.0f} تومان
+دلار: {data['dollar']:,.0f} تومان
 انس طلا: {data['gold_ounce']:.2f} دلار
 انس نقره: {data['silver_ounce']:.2f} دلار
 نسبت طلا به نقره: {data['gold_silver_ratio']:.1f}
@@ -108,7 +109,7 @@ def send_telegram_signal(score, reasons, data, risk_silver, risk_gold):
 {risk_gold['explanation']}
 """
 
-    # ارسال به تلگرام
+    # ارسال
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     try:
         response = requests.post(url, json={
