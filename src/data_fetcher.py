@@ -69,8 +69,10 @@ def _fetch_from_tgju(url: str) -> Optional[float]:
     
     return None
 
+# ============================================
+# توابع دریافت قیمت
+# ============================================
 def fetch_silver_price():
-    """دریافت قیمت نقره ۹۹۹"""
     url = "https://www.tgju.org/profile/silver_999"
     return _fetch_from_tgju(url)
 
@@ -87,15 +89,42 @@ def fetch_dollar_price():
     return _fetch_from_tgju(url)
 
 def fetch_ounce_gold_price():
-    """دریافت قیمت انس طلا"""
     url = "https://www.tgju.org/profile/ons"
     return _fetch_from_tgju(url)
 
 def fetch_ounce_silver_price():
-    """دریافت قیمت انس نقره"""
-    url = "https://www.tgju.org/profile/silver"  # آدرس جدید انس نقره
+    url = "https://www.tgju.org/profile/silver"
     return _fetch_from_tgju(url)
 
+# ============================================
+# محاسبه حباب طلای ۱۸ و ۲۴ عیار
+# ============================================
+def calculate_gold_premiums(gold_ounce: float, dollar: float, gold_18: float, gold_24: float) -> Dict[str, float]:
+    """
+    محاسبه حباب طلای ۱۸ و ۲۴ عیار
+    """
+    # قیمت منصفانه طلای ۲۴ عیار (خالص)
+    fair_gold_24 = (gold_ounce * dollar) / 31.103
+    
+    # قیمت منصفانه طلای ۱۸ عیار (۷۵٪ خلوص)
+    fair_gold_18 = fair_gold_24 * 0.75
+    
+    # حباب طلای ۲۴ عیار
+    gold_24_premium = ((gold_24 / fair_gold_24) - 1) * 100 if fair_gold_24 > 0 else 0
+    
+    # حباب طلای ۱۸ عیار
+    gold_18_premium = ((gold_18 / fair_gold_18) - 1) * 100 if fair_gold_18 > 0 else 0
+    
+    return {
+        'fair_gold_24': fair_gold_24,
+        'fair_gold_18': fair_gold_18,
+        'gold_24_premium': gold_24_premium,
+        'gold_18_premium': gold_18_premium,
+    }
+
+# ============================================
+# تابع اصلی دریافت داده
+# ============================================
 def get_all_data() -> Dict[str, Any]:
     global DATA_SOURCE
     
@@ -135,26 +164,36 @@ def get_all_data() -> Dict[str, Any]:
         DATA_SOURCE = "error"
         raise Exception("⚠️ قیمت طلای ۱۸ عیار دریافت نشد. لطفاً بعداً تلاش کنید.")
     
-    # محاسبه مشتقات با مدیریت خطا
+    # محاسبه حباب نقره
     try:
         if results.get('silver_ounce', 0) > 0 and results.get('dollar', 0) > 0:
             fair_silver = (results['silver_ounce'] * results['dollar']) / 31.103
         else:
             fair_silver = results['silver_999']
-            
-        if results.get('gold_ounce', 0) > 0 and results.get('dollar', 0) > 0:
-            fair_gold = (results['gold_ounce'] * results['dollar']) / 31.103
-        else:
-            fair_gold = results['gold_18']
+        
+        silver_premium = ((results['silver_999'] / fair_silver) - 1) * 100 if fair_silver > 0 else 0
     except:
         fair_silver = results['silver_999']
-        fair_gold = results['gold_18']
+        silver_premium = 0
     
-    results['fair_silver'] = fair_silver
-    results['fair_gold'] = fair_gold
-    results['silver_premium'] = ((results['silver_999'] / fair_silver) - 1) * 100 if fair_silver > 0 else 0
-    results['gold_premium'] = ((results['gold_18'] / fair_gold) - 1) * 100 if fair_gold > 0 else 0
-    results['gold_silver_ratio'] = results['gold_ounce'] / results['silver_ounce'] if results.get('silver_ounce', 0) > 0 else 69.3
+    # محاسبه حباب طلای ۱۸ و ۲۴ عیار
+    gold_premiums = calculate_gold_premiums(
+        results['gold_ounce'],
+        results['dollar'],
+        results['gold_18'],
+        results['gold_24']
+    )
+    
+    # نسبت طلا به نقره
+    gold_silver_ratio = results['gold_ounce'] / results['silver_ounce'] if results.get('silver_ounce', 0) > 0 else 69.3
+    
+    # جمع‌آوری نتایج
+    results.update({
+        'fair_silver': fair_silver,
+        'silver_premium': silver_premium,
+        'gold_silver_ratio': gold_silver_ratio,
+        **gold_premiums  # اضافه کردن حباب‌های طلا
+    })
     
     DATA_SOURCE = "live (tgju.org)"
     if failed_items:
