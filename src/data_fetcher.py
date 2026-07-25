@@ -40,6 +40,7 @@ def _fetch_from_tgju(url: str) -> Optional[float]:
     
     soup = BeautifulSoup(response.text, "html.parser")
     
+    # اولویت با سلکتورهای جدید
     candidates = [
         soup.select_one("span#last-price-value"),
         soup.select_one("[data-col='info.last_trade.PDrCotVal']"),
@@ -69,9 +70,12 @@ def _fetch_from_tgju(url: str) -> Optional[float]:
     
     return None
 
+# ============================================
+# توابع دریافت قیمت با آدرس‌های جدید
+# ============================================
 def fetch_silver_price():
-    """دریافت قیمت نقره ۹۹۹ از آدرسی که کاربر مشخص کرده"""
-    url = "https://www.tgju.org/profile/silver_999"  # دقیقاً همان لینکی که شما گفتید
+    """دریافت قیمت نقره ۹۹۹ از آدرس جدید"""
+    url = "https://www.tgju.org/profile/silver"  # آدرس جدید شما
     return _fetch_from_tgju(url)
 
 def fetch_gold_18_price():
@@ -87,14 +91,19 @@ def fetch_dollar_price():
     return _fetch_from_tgju(url)
 
 def fetch_ounce_gold_price():
-    url = "https://www.tgju.org/profile/gold_ounce"
+    """دریافت قیمت انس طلا از آدرس جدید طلا جهانی"""
+    url = "https://www.tgju.org/gold-global"  # آدرس جدید شما
     return _fetch_from_tgju(url)
 
 def fetch_ounce_silver_price():
-    url = "https://www.tgju.org/profile/silver-ounce"
+    """دریافت قیمت انس نقره از آدرس جدید نقره"""
+    url = "https://www.tgju.org/profile/silver"  # آدرس جدید شما
     return _fetch_from_tgju(url)
 
-def get_all_data():
+# ============================================
+# تابع اصلی دریافت داده
+# ============================================
+def get_all_data() -> Dict[str, Any]:
     global DATA_SOURCE
     
     results = {}
@@ -133,7 +142,7 @@ def get_all_data():
         DATA_SOURCE = "error"
         raise Exception("⚠️ قیمت طلای ۱۸ عیار دریافت نشد. لطفاً بعداً تلاش کنید.")
     
-    # محاسبه مشتقات
+    # محاسبه مشتقات با مدیریت خطا
     try:
         if results.get('silver_ounce', 0) > 0 and results.get('dollar', 0) > 0:
             fair_silver = (results['silver_ounce'] * results['dollar']) / 31.103
