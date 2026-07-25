@@ -4,7 +4,7 @@ import time
 from config.settings import BALE_TOKEN, BALE_CHAT_ID
 import jdatetime
 from datetime import datetime, timezone
-from src.data_fetcher import DATA_SOURCE  # وارد کردن وضعیت منبع داده
+from src.data_fetcher import DATA_SOURCE
 
 logger = logging.getLogger(__name__)
 
@@ -53,29 +53,31 @@ def send_bale_signal(score, reasons, data, risk_silver, risk_gold, max_retries=3
         advice = "ریسک بالاست، احتیاط کن"
 
     # توضیح کامل "چرا این تصمیم؟"
-    decision_explanation = "".join([
-        "دوست من، این تصمیم بر اساس چند تا نشانه‌ی مهم گرفته شده:\n\n",
-        chr(10).join(['🔸 ' + r for r in reasons]),
-        "\n\nوقتی اینا رو کنار هم می‌ذاریم، به این نتیجه می‌رسیم که الان شرایط برای ",
-        "معامله‌ی نقره مناسب‌تر شده. البته همیشه یادت باشه که بازار پیش‌بینی‌پذیر نیست ",
-        "و این تحلیل فقط یه راهنمایی‌ست. 😊"
-    ])
+    if reasons:
+        reasons_text = "\n".join(['🔸 ' + r for r in reasons])
+    else:
+        reasons_text = "🔸 نشانه‌های خاصی پیدا نشد."
+
+    decision_explanation = f"""دوست من، این تصمیم بر اساس چند تا نشانه‌ی مهم گرفته شده:
+
+{reasons_text}
+
+وقتی اینا رو کنار هم می‌ذاریم، به این نتیجه می‌رسیم که الان شرایط برای معامله‌ی نقره مناسب‌تر شده. البته همیشه یادت باشه که بازار پیش‌بینی‌پذیر نیست و این تحلیل فقط یه راهنمایی‌ست. 😊"""
 
     # توضیح کامل حباب قیمتی
-    premium_explanation = (
-        f"نقره: {data['silver_premium']:+.1f}% - "
-        f"{'یعنی نقره الان ارزون‌تر از ارزش جهانی‌ش هست' if data['silver_premium'] < 0 else 'یعنی نقره الان گرون‌تر از ارزش جهانی‌ش هست'}.\n"
-        f"طلا: {data['gold_premium']:+.1f}% - "
-        f"{'یعنی طلا الان ارزون‌تر از ارزش جهانی‌ش هست' if data['gold_premium'] < 0 else 'یعنی طلا الان گرون‌تر از ارزش جهانی‌ش هست'}.\n"
-        "(عدد منفی یعنی کالا نسبت به قیمت جهانی‌اش با تخفیف فروخته می‌شه و عدد مثبت یعنی با حباب.)"
-    )
+    silver_premium_text = f"{data['silver_premium']:+.1f}% - {'ارزون‌تر از ارزش جهانی' if data['silver_premium'] < 0 else 'گرون‌تر از ارزش جهانی'}"
+    gold_premium_text = f"{data['gold_premium']:+.1f}% - {'ارزون‌تر از ارزش جهانی' if data['gold_premium'] < 0 else 'گرون‌تر از ارزش جهانی'}"
+
+    premium_explanation = f"""نقره: {silver_premium_text}
+طلا: {gold_premium_text}
+(عدد منفی یعنی کالا نسبت به قیمت جهانی‌اش با تخفیف فروخته می‌شه و عدد مثبت یعنی با حباب.)"""
 
     # اطلاع از منبع داده
     data_source_text = f"📡 منبع داده: {DATA_SOURCE}"
-    if "fallback" in DATA_SOURCE:
+    if "fallback" in DATA_SOURCE.lower():
         data_source_text += "\n⚠️ توجه: داده‌های لحظه‌ای در دسترس نبود. قیمت‌ها بر اساس داده‌های جایگزین نمایش داده می‌شوند و ممکن است با بازار واقعی تفاوت داشته باشند."
 
-    # ساخت پیام (بدون Markdown برای بله)
+    # ساخت پیام (بدون Markdown)
     message = f"""
 سلام! 👋
 
@@ -96,7 +98,7 @@ def send_bale_signal(score, reasons, data, risk_silver, risk_gold, max_retries=3
 {premium_explanation}
 
 ---
-قیمت‌های لحظه‌ای (از سایت tgju.org):
+قیمت‌های لحظه‌ای:
 نقره ۹۹۹: {data['silver_999']:,.0f} تومان
 طلای ۱۸ عیار: {data['gold_18']:,.0f} تومان
 طلای ۲۴ عیار: {data['gold_24']:,.0f} تومان
