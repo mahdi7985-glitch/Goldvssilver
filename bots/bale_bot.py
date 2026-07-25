@@ -4,6 +4,7 @@ import time
 from config.settings import BALE_TOKEN, BALE_CHAT_ID
 import jdatetime
 from datetime import datetime, timezone
+from src.data_fetcher import DATA_SOURCE  # وارد کردن وضعیت منبع داده
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,29 @@ def send_bale_signal(score, reasons, data, risk_silver, risk_gold, max_retries=3
         status_text = "فروش قوی"
         advice = "ریسک بالاست، احتیاط کن"
 
+    # توضیح کامل "چرا این تصمیم؟"
+    decision_explanation = "".join([
+        "دوست من، این تصمیم بر اساس چند تا نشانه‌ی مهم گرفته شده:\n\n",
+        chr(10).join(['🔸 ' + r for r in reasons]),
+        "\n\nوقتی اینا رو کنار هم می‌ذاریم، به این نتیجه می‌رسیم که الان شرایط برای ",
+        "معامله‌ی نقره مناسب‌تر شده. البته همیشه یادت باشه که بازار پیش‌بینی‌پذیر نیست ",
+        "و این تحلیل فقط یه راهنمایی‌ست. 😊"
+    ])
+
+    # توضیح کامل حباب قیمتی
+    premium_explanation = (
+        f"نقره: {data['silver_premium']:+.1f}% - "
+        f"{'یعنی نقره الان ارزون‌تر از ارزش جهانی‌ش هست' if data['silver_premium'] < 0 else 'یعنی نقره الان گرون‌تر از ارزش جهانی‌ش هست'}.\n"
+        f"طلا: {data['gold_premium']:+.1f}% - "
+        f"{'یعنی طلا الان ارزون‌تر از ارزش جهانی‌ش هست' if data['gold_premium'] < 0 else 'یعنی طلا الان گرون‌تر از ارزش جهانی‌ش هست'}.\n"
+        "(عدد منفی یعنی کالا نسبت به قیمت جهانی‌اش با تخفیف فروخته می‌شه و عدد مثبت یعنی با حباب.)"
+    )
+
+    # اطلاع از منبع داده
+    data_source_text = f"📡 منبع داده: {DATA_SOURCE}"
+    if "fallback" in DATA_SOURCE:
+        data_source_text += "\n⚠️ توجه: داده‌های لحظه‌ای در دسترس نبود. قیمت‌ها بر اساس داده‌های جایگزین نمایش داده می‌شوند و ممکن است با بازار واقعی تفاوت داشته باشند."
+
     # ساخت پیام (بدون Markdown برای بله)
     message = f"""
 سلام! 👋
@@ -58,22 +82,21 @@ def send_bale_signal(score, reasons, data, risk_silver, risk_gold, max_retries=3
 {status_emoji} تحلیل بازار نقره
 📅 {persian_date}
 
+{data_source_text}
+
 ---
 وضعیت کلی: {status_text} - {advice}
 امتیاز سیستم: {score} از ۱۰۰
 
 ---
-چرا این تصمیم؟
-{chr(10).join(['🔸 ' + r for r in reasons])}
+{decision_explanation}
 
 ---
-حباب قیمتی:
-نقره: {data['silver_premium']:+.1f}%
-طلا: {data['gold_premium']:+.1f}%
-(عدد منفی = ارزان، عدد مثبت = گران)
+حباب قیمتی (ارزش منصفانه در برابر قیمت بازار):
+{premium_explanation}
 
 ---
-قیمت‌های لحظه‌ای:
+قیمت‌های لحظه‌ای (از سایت tgju.org):
 نقره ۹۹۹: {data['silver_999']:,.0f} تومان
 طلای ۱۸ عیار: {data['gold_18']:,.0f} تومان
 طلای ۲۴ عیار: {data['gold_24']:,.0f} تومان
