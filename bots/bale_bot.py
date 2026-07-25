@@ -4,7 +4,6 @@ import time
 from config.settings import BALE_TOKEN, BALE_CHAT_ID
 import jdatetime
 from datetime import datetime, timezone
-from src.data_fetcher import DATA_SOURCE
 
 logger = logging.getLogger(__name__)
 
@@ -60,9 +59,7 @@ def send_bale_signal(score, reasons, data, risk_silver, risk_gold, max_retries=3
 
     decision_explanation = f"""دوست من، این تصمیم بر اساس چند تا نشانه‌ی مهم گرفته شده:
 
-{reasons_text}
-
-وقتی اینا رو کنار هم می‌ذاریم، به این نتیجه می‌رسیم که الان شرایط برای معامله‌ی نقره مناسب‌تر شده. البته همیشه یادت باشه که بازار پیش‌بینی‌پذیر نیست و این تحلیل فقط یه راهنمایی‌ست. 😊"""
+{reasons_text}"""
 
     # توضیح کامل حباب قیمتی
     silver_premium_text = f"{data['silver_premium']:+.1f}% - {'ارزون‌تر از ارزش جهانی' if data['silver_premium'] < 0 else 'گرون‌تر از ارزش جهانی'}"
@@ -72,19 +69,12 @@ def send_bale_signal(score, reasons, data, risk_silver, risk_gold, max_retries=3
 طلا: {gold_premium_text}
 (عدد منفی یعنی کالا نسبت به قیمت جهانی‌اش با تخفیف فروخته می‌شه و عدد مثبت یعنی با حباب.)"""
 
-    # اطلاع از منبع داده
-    data_source_text = f"📡 منبع داده: {DATA_SOURCE}"
-    if "fallback" in DATA_SOURCE.lower():
-        data_source_text += "\n⚠️ توجه: داده‌های لحظه‌ای در دسترس نبود. قیمت‌ها بر اساس داده‌های جایگزین نمایش داده می‌شوند و ممکن است با بازار واقعی تفاوت داشته باشند."
-
-    # ساخت پیام (بدون Markdown)
+    # ساخت پیام (بدون منبع داده و یادآوری)
     message = f"""
 سلام! 👋
 
 {status_emoji} تحلیل بازار نقره
 📅 {persian_date}
-
-{data_source_text}
 
 ---
 وضعیت کلی: {status_text} - {advice}
@@ -132,7 +122,7 @@ def send_bale_signal(score, reasons, data, risk_silver, risk_gold, max_retries=3
     for attempt in range(max_retries):
         try:
             response = requests.post(
-                f"https://tapi.bale.ai/bot{BALE_TOKEN}/sendMessage",
+                f"https://api.bale.ai/bot{BALE_TOKEN}/sendMessage",
                 json={'chat_id': BALE_CHAT_ID, 'text': message},
                 timeout=15
             )
