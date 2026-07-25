@@ -3,25 +3,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# توکن‌های ربات‌ها (مطابق با عنوان‌های Secrets شما)
+# توکن‌های ربات‌ها
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 BALE_TOKEN = os.getenv("BALE_TOKEN")
-
-# آیدی عددی کاربران (مطابق با عنوان‌های Secrets شما)
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-if TELEGRAM_CHAT_ID:
-    TELEGRAM_CHAT_ID = int(TELEGRAM_CHAT_ID)
-else:
-    TELEGRAM_CHAT_ID = None
-
 BALE_CHAT_ID = os.getenv("BALE_CHAT_ID")
-if BALE_CHAT_ID:
-    BALE_CHAT_ID = int(BALE_CHAT_ID)
-else:
-    BALE_CHAT_ID = None
 
 # تنظیمات تحلیل
-ARBITRAGE_THRESHOLD = 5.0
+ARBITRAGE_THRESHOLD = 5.0  # درصد حباب برای سیگنال
 RSI_OVERSOLD = 30
 RSI_OVERBOUGHT = 70
 ADX_THRESHOLD = 25
@@ -31,9 +20,9 @@ GOLD_SILVER_RATIO_LOW = 70
 # تنظیمات مدیریت ریسک
 STOP_LOSS_ATR_MULTIPLIER = 1.5
 TAKE_PROFIT_ATR_MULTIPLIER = 2.5
-MAX_CAPITAL_RISK = 0.10
-TRADING_FEE = 0.01
-MIN_PROFIT_AFTER_FEE = 0.03
+MAX_CAPITAL_RISK = 0.10  # ۱۰٪ سرمایه در هر معامله
+TRADING_FEE = 0.01  # ۱٪ کارمزد خرید و فروش
+MIN_PROFIT_AFTER_FEE = 0.03  # حداقل سود خالص ۳٪
 
 # تنظیمات ارسال پیام
 MIN_SCORE_CHANGE = 10
