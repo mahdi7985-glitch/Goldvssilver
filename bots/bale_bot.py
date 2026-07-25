@@ -61,15 +61,17 @@ def send_bale_signal(score, reasons, data, risk_silver, risk_gold, max_retries=3
 
 {reasons_text}"""
 
-    # توضیح کامل حباب قیمتی
+    # توضیح کامل حباب قیمتی (با طلای ۱۸ و ۲۴)
     silver_premium_text = f"{data['silver_premium']:+.1f}% - {'ارزون‌تر از ارزش جهانی' if data['silver_premium'] < 0 else 'گرون‌تر از ارزش جهانی'}"
-    gold_premium_text = f"{data['gold_premium']:+.1f}% - {'ارزون‌تر از ارزش جهانی' if data['gold_premium'] < 0 else 'گرون‌تر از ارزش جهانی'}"
+    gold_18_premium_text = f"{data['gold_18_premium']:+.1f}% - {'ارزون‌تر از ارزش جهانی' if data['gold_18_premium'] < 0 else 'گرون‌تر از ارزش جهانی'}"
+    gold_24_premium_text = f"{data['gold_24_premium']:+.1f}% - {'ارزون‌تر از ارزش جهانی' if data['gold_24_premium'] < 0 else 'گرون‌تر از ارزش جهانی'}"
 
     premium_explanation = f"""نقره: {silver_premium_text}
-طلا: {gold_premium_text}
+طلای ۱۸ عیار: {gold_18_premium_text}
+طلای ۲۴ عیار: {gold_24_premium_text}
 (عدد منفی یعنی کالا نسبت به قیمت جهانی‌اش با تخفیف فروخته می‌شه و عدد مثبت یعنی با حباب.)"""
 
-    # ساخت پیام (بدون منبع داده و یادآوری)
+    # ساخت پیام
     message = f"""
 سلام! 👋
 
@@ -122,7 +124,7 @@ def send_bale_signal(score, reasons, data, risk_silver, risk_gold, max_retries=3
     for attempt in range(max_retries):
         try:
             response = requests.post(
-                f"https://tapi.bale.ai/bot{BALE_TOKEN}/sendMessage",
+                f"https://api.bale.ai/bot{BALE_TOKEN}/sendMessage",
                 json={'chat_id': BALE_CHAT_ID, 'text': message},
                 timeout=15
             )
